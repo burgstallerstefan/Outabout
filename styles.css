@@ -736,6 +736,19 @@ button.warn,
   width: 100%;
   height: 18px;
 }
+.media-selection-dialog p {
+  margin: 0 0 16px;
+  color: #555;
+}
+.media-choice-actions {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.media-choice-actions button,
+.media-selection-dialog > button {
+  width: 100%;
+}
 .import-summary dl {
   display: grid;
   grid-template-columns: 1fr auto;

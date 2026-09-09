@@ -100,6 +100,17 @@ test("Geotag-Medien werden als Koordinaten gerendert und nach Import fokussiert"
   assert.match(media, /focusImportedMedia\(importedCoords\)/);
 });
 
+test("Medienimport erlaubt Ordner und mehrere einzelne Dateien", () => {
+  const media = fs.readFileSync(path.join(root, "media.js"), "utf8");
+  assert.match(html, /id="mediaFilesInput"/);
+  assert.match(html, /id="selectMediaFiles"/);
+  assert.match(html, /id="selectMediaDirectory"/);
+  assert.match(media, /function selectMediaFiles/);
+  assert.match(media, /multiple: true/);
+  assert.match(media, /mediaFilesInput/);
+  assert.match(media, /function openMediaSelection/);
+});
+
 test("GPX-Import ist global verfügbar und übernimmt die Originalstrecke", () => {
   const planner = fs.readFileSync(path.join(root, "planner.js"), "utf8");
   const gpx = fs.readFileSync(path.join(root, "gpx.js"), "utf8");

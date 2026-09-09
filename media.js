@@ -897,6 +897,54 @@
     input.click();
   }
 
+  function openMediaSelection() {
+    const dialog = app.el("mediaSelectionDialog");
+    if (!dialog?.open) {
+      if (dialog?.showModal) dialog.showModal();
+      else dialog?.setAttribute("open", "");
+    }
+  }
+
+  function closeMediaSelection() {
+    app.el("mediaSelectionDialog")?.close?.();
+  }
+
+  async function selectMediaFiles() {
+    let files = [];
+    if (window.showOpenFilePicker) {
+      try {
+        const handles = await window.showOpenFilePicker({
+          multiple: true,
+          types: [
+            {
+              description: "Fotos und Videos",
+              accept: {
+                "image/*": [".jpg", ".jpeg", ".heic", ".heif", ".png"],
+                "video/*": [".mp4", ".mov", ".m4v"],
+              },
+            },
+          ],
+        });
+        files = await Promise.all(handles.map((handle) => handle.getFile()));
+      } catch (error) {
+        if (error?.name === "AbortError") return;
+        app.log("media:multi-file-picker", error);
+      }
+    }
+    if (!files.length) {
+      const input = app.el("mediaFilesInput");
+      input.value = "";
+      input.click();
+      return;
+    }
+    importEntries(
+      files.map((file) => ({ file, path: file.name, name: file.name })),
+    ).catch((error) => {
+      app.log("media:multi-file-import", error);
+      app.setStatus("Medienimport ist fehlgeschlagen.", "error");
+    });
+  }
+
   async function refreshAccessNote() {
     const note = app.el("mediaAccessNote");
     if (!note) return;
@@ -952,11 +1000,21 @@
     appendPointMedia,
     open: openMapPopup,
     selectDirectory,
+    selectMediaFiles,
     resolveFile,
     refresh: renderMarkers,
   };
 
-  app.el("mediaFolderBtn")?.addEventListener("click", selectDirectory);
+  app.el("mediaFolderBtn")?.addEventListener("click", openMediaSelection);
+  app.el("selectMediaFiles")?.addEventListener("click", () => {
+    closeMediaSelection();
+    selectMediaFiles();
+  });
+  app.el("selectMediaDirectory")?.addEventListener("click", () => {
+    closeMediaSelection();
+    selectDirectory();
+  });
+  app.el("closeMediaSelection")?.addEventListener("click", closeMediaSelection);
   app.el("mediaDirectoryInput")?.addEventListener("change", (event) => {
     const files = [...(event.target.files || [])];
     const entries = files.map((file) => ({
@@ -966,6 +1024,15 @@
     }));
     importEntries(entries).catch((error) => {
       app.log("media:fallback-import", error);
+      app.setStatus("Medienimport ist fehlgeschlagen.", "error");
+    });
+  });
+  app.el("mediaFilesInput")?.addEventListener("change", (event) => {
+    const files = [...(event.target.files || [])];
+    importEntries(
+      files.map((file) => ({ file, path: file.name, name: file.name })),
+    ).catch((error) => {
+      app.log("media:multi-file-import", error);
       app.setStatus("Medienimport ist fehlgeschlagen.", "error");
     });
   });

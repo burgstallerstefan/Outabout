@@ -24,7 +24,7 @@
   };
 
   const app = {
-    version: "2026.09.09.1",
+    version: "2026.09.09.2",
     state,
     events,
     config: {
@@ -158,10 +158,54 @@
     doubleClickZoom: false,
   });
   app.map = map;
-  // Explicitly disable double-click / double-tap zoom as well. This avoids
-  // the built-in MapLibre gesture competing with Outabout's free-point gesture
-  // on mobile browsers such as Android Chrome.
   map.doubleClickZoom?.disable();
+
+  // Android Chrome can still interpret a fast double tap as browser zoom even
+  // when MapLibre's own double-click zoom is disabled. Catch the second touch
+  // before the browser acts and open Outabout's free-point popup directly.
+  let lastMapTap = null;
+  map.getContainer().addEventListener(
+    "touchend",
+    (event) => {
+      if (app.state.tracking.active || event.changedTouches.length !== 1) {
+        lastMapTap = null;
+        return;
+      }
+      const target = event.target;
+      if (
+        target?.closest?.(
+          ".maplibregl-marker,.maplibregl-popup,.map-control,button,input,label,a",
+        )
+      ) {
+        lastMapTap = null;
+        return;
+      }
+      const touch = event.changedTouches[0];
+      const now = performance.now();
+      const current = { time: now, x: touch.clientX, y: touch.clientY };
+      const previous = lastMapTap;
+      lastMapTap = current;
+      if (!previous) return;
+      const elapsed = now - previous.time;
+      const distance = Math.hypot(current.x - previous.x, current.y - previous.y);
+      if (elapsed > 380 || distance > 48) return;
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      lastMapTap = null;
+
+      const rect = map.getContainer().getBoundingClientRect();
+      const lngLat = map.unproject([current.x - rect.left, current.y - rect.top]);
+      app.ui.openPointPopup?.({
+        coord: [lngLat.lng, lngLat.lat],
+        name: "Punkt",
+        type: "Kartenpunkt",
+        cat: "map",
+      });
+    },
+    { capture: true, passive: false },
+  );
+
   map.addControl(
     new maplibregl.NavigationControl({ showCompass: false }),
     "bottom-right",

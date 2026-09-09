@@ -78,6 +78,23 @@
       .filter(Boolean);
   }
 
+  function segmentWaypoints(segments) {
+    const points = [];
+    for (const segment of segments) {
+      for (const coord of [segment[0], segment.at(-1)]) {
+        if (!points.some((point) => app.util.km(point.coord, coord) < 0.002)) {
+          points.push({
+            coord,
+            name: `Wegpunkt ${points.length + 1}`,
+            type: "GPX-Segment",
+            cat: "gpx",
+          });
+        }
+      }
+    }
+    return points;
+  }
+
   function gpxName(xml, fallback) {
     return (
       xml
@@ -95,9 +112,10 @@
       throw new Error(
         "Die GPX-Datei enthält keine Strecke mit mindestens zwei Punkten.",
       );
+    const waypoints = namedWaypoints(xml);
     return {
       segments,
-      waypoints: namedWaypoints(xml),
+      waypoints: waypoints.length ? waypoints : segmentWaypoints(segments),
       name: gpxName(xml, filename),
     };
   }

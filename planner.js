@@ -599,7 +599,7 @@
     sharedRoute = false;
   }
 
-  function pointsChanged({ recalculate = true, openList = true } = {}) {
+  function pointsChanged({ recalculate = true, openList = false } = {}) {
     detachSharedHash();
     abortRouting();
     route.stale = true;

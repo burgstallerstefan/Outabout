@@ -444,11 +444,15 @@ button.warn,
   font-weight: 900;
 }
 .route-point-marker {
-  width: 31px;
-  height: 31px;
-  min-height: 31px;
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  border-color: #fff;
   border-width: 3px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.65);
+  font-size: 14px;
   touch-action: manipulation;
 }
 .route-list-badge.fallback,

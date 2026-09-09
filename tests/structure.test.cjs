@@ -119,6 +119,7 @@ test("GPX-Import ist global verfügbar und übernimmt die Originalstrecke", () =
   assert.match(gpx, /function trackSegments/);
   assert.match(gpx, /function splitDisconnected/);
   assert.match(gpx, /function namedWaypoints/);
+  assert.match(gpx, /function segmentWaypoints/);
   assert.match(gpx, /rte > rtept/);
   assert.match(gpx, /pointSegments\(xml, "trk trkseg"\)/);
   assert.match(gpx, /tracks\.flatMap\(splitDisconnected\)/);
@@ -126,6 +127,20 @@ test("GPX-Import ist global verfügbar und übernimmt die Originalstrecke", () =
   assert.match(planner, /function importGpxTrack/);
   assert.match(planner, /route\.segments = importedSegments/);
   assert.match(planner, /index === 0 \? "break" : segment\.status/);
+});
+
+test("Routenliste bleibt beim HinzufÃ¼gen eingeklappt und Kartenmarker sind nummeriert", () => {
+  const planner = fs.readFileSync(path.join(root, "planner.js"), "utf8");
+  const styles = fs.readFileSync(path.join(root, "styles.css"), "utf8");
+  assert.match(
+    planner,
+    /function pointsChanged\(\{ recalculate = true, openList = false \} = \{\}\)/,
+  );
+  assert.match(planner, /markerElement\.textContent = String\(index \+ 1\)/);
+  assert.match(
+    styles,
+    /\.route-point-marker \{[\s\S]*background: var\(--blue\)/,
+  );
 });
 
 test("Messmodus zeigt ein Kartenfadenkreuz und Standortwerte", () => {

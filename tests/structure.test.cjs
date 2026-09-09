@@ -107,6 +107,8 @@ test("GPX-Import ist global verfügbar und übernimmt die Originalstrecke", () =
   assert.match(html, /id="gpxImportInput"/);
   assert.match(gpx, /function trackSegments/);
   assert.match(gpx, /function splitDisconnected/);
+  assert.match(gpx, /function namedWaypoints/);
+  assert.match(gpx, /rte > rtept/);
   assert.match(gpx, /pointSegments\(xml, "trk trkseg"\)/);
   assert.match(gpx, /tracks\.flatMap\(splitDisconnected\)/);
   assert.match(gpx, /app\.planner\?\.importGpxTrack/);

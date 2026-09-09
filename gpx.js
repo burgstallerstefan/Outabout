@@ -57,6 +57,27 @@
     return waypoints.length >= 2 ? splitDisconnected(waypoints) : [];
   }
 
+  function namedWaypoints(xml) {
+    const routePoints = [...xml.querySelectorAll("rte > rtept")];
+    const elements = routePoints.length
+      ? routePoints
+      : [...xml.querySelectorAll("wpt")];
+    return elements
+      .map((element, index) => {
+        const coord = pointFromElement(element);
+        if (!coord) return null;
+        return {
+          coord,
+          name:
+            element.querySelector(":scope > name")?.textContent?.trim() ||
+            `Wegpunkt ${index + 1}`,
+          type: "GPX-Wegpunkt",
+          cat: "gpx",
+        };
+      })
+      .filter(Boolean);
+  }
+
   function gpxName(xml, fallback) {
     return (
       xml
@@ -74,7 +95,11 @@
       throw new Error(
         "Die GPX-Datei enthält keine Strecke mit mindestens zwei Punkten.",
       );
-    return { segments, name: gpxName(xml, filename) };
+    return {
+      segments,
+      waypoints: namedWaypoints(xml),
+      name: gpxName(xml, filename),
+    };
   }
 
   async function importGpx(file) {

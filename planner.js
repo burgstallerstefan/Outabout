@@ -1334,7 +1334,10 @@
     app.setStatus("GPX gespeichert.", "success");
   }
 
-  function importGpxTrack(segments, { name = "Importierte GPX-Route" } = {}) {
+  function importGpxTrack(
+    segments,
+    { name = "Importierte GPX-Route", waypoints = [] } = {},
+  ) {
     const importedSegments = (segments || [])
       .map((coords) =>
         (coords || [])
@@ -1351,18 +1354,23 @@
     abortRouting();
     clearTimeout(rebuildTimer);
     rebuildTimer = null;
-    route.points = [
-      normalizePoint(
-        importedSegments[0].coords[0],
-        { name: "Start", cat: "gpx" },
-        0,
-      ),
-      normalizePoint(
-        importedSegments.at(-1).coords.at(-1),
-        { name: "Ziel", cat: "gpx" },
-        1,
-      ),
-    ].filter(Boolean);
+    const importedWaypoints = waypoints
+      .map((waypoint, index) => normalizePoint(waypoint.coord, waypoint, index))
+      .filter(Boolean);
+    route.points = importedWaypoints.length
+      ? importedWaypoints
+      : [
+          normalizePoint(
+            importedSegments[0].coords[0],
+            { name: "Start", cat: "gpx" },
+            0,
+          ),
+          normalizePoint(
+            importedSegments.at(-1).coords.at(-1),
+            { name: "Ziel", cat: "gpx" },
+            1,
+          ),
+        ].filter(Boolean);
     const analyzed = analyzeSegments(importedSegments);
     route.segments = importedSegments;
     route.coords = analyzed.coords;
@@ -1381,7 +1389,7 @@
     persist();
     app.emit("route:calculated", { route });
     app.setStatus(
-      `GPX importiert: ${analyzed.coords.length.toLocaleString("de-AT")} Trackpunkte in ${importedSegments.length} getrennten Segment${importedSegments.length === 1 ? "" : "en"}.`,
+      `GPX importiert: ${analyzed.coords.length.toLocaleString("de-AT")} Trackpunkte, ${route.points.length} Wegpunkte und ${importedSegments.length} getrennte Segmente.`,
       "success",
     );
     fitRoute();

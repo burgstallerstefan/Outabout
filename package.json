@@ -3,6 +3,6 @@
   "private": true,
   "scripts": {
     "test": "node --test tests/*.test.cjs",
-    "check": "node --check app.js && node --check activity.js && node --check map-controls.js && node --check planner.js && node --check gpx.js && node --check pois.js && node --check media.js && node --check media-worker.js && node --check navigation.js"
+    "check": "node --check app.js && node --check activity.js && node --check map-controls.js && node --check planner.js && node --check gpx.js && node --check pois.js && node --check media.js && node --check media-worker.js && node --check navigation.js && node --check measure.js"
   }
 }

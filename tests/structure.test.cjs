@@ -116,3 +116,15 @@ test("GPX-Import ist global verfügbar und übernimmt die Originalstrecke", () =
   assert.match(planner, /route\.segments = importedSegments/);
   assert.match(planner, /index === 0 \? "break" : segment\.status/);
 });
+
+test("Messmodus zeigt ein Kartenfadenkreuz und Standortwerte", () => {
+  const measure = fs.readFileSync(path.join(root, "measure.js"), "utf8");
+  assert.match(html, /id="measureBtn"/);
+  assert.match(html, /id="measureReticle"/);
+  assert.match(html, /id="measureDistance"/);
+  assert.match(html, /id="measureElevation"/);
+  assert.match(measure, /function centerCoord/);
+  assert.match(measure, /app\.util\.km\(current, coord\)/);
+  assert.match(measure, /api\.open-meteo\.com\/v1\/elevation/);
+  assert.match(measure, /map\.on\("move", update\)/);
+});

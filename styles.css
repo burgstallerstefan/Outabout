@@ -65,6 +65,71 @@ button.warn,
   z-index: 10;
 }
 
+.measure-reticle {
+  position: absolute;
+  z-index: 9;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  pointer-events: none;
+}
+.measure-reticle::before,
+.measure-reticle::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 2px;
+  background: #111;
+  box-shadow:
+    0 0 2px #fff,
+    0 0 2px #fff;
+  content: "";
+  transform: translate(-50%, -50%);
+}
+.measure-reticle::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+.measure-reticle span {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border: 2px solid #111;
+  border-radius: 50%;
+  background: #fff;
+  transform: translate(-50%, -50%);
+}
+.measure-button {
+  right: 10px;
+  bottom: 78px;
+}
+.measure-info {
+  right: 10px;
+  bottom: 132px;
+  display: grid;
+  min-width: 154px;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid #ccc;
+  border-radius: 11px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+}
+.measure-info strong {
+  margin-bottom: 2px;
+}
+.measure-info span {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+}
+
 .toolbar {
   top: max(8px, env(safe-area-inset-top));
   left: 8px;

@@ -5,13 +5,13 @@
   if (!app) return;
 
   function boot() {
-    if (!app.planner || !app.el("top")) {
+    if (!app.planner || !app.el("filters")) {
       setTimeout(boot, 40);
       return;
     }
 
     const planner = app.planner;
-    const toolbar = app.el("top");
+    const filterBar = app.el("filters");
     const undoButton = document.createElement("button");
     const redoButton = document.createElement("button");
 
@@ -29,13 +29,10 @@
     redoButton.title = "Routenänderung wiederholen";
     redoButton.setAttribute("aria-label", redoButton.title);
 
-    const searchButton = app.el("searchBtn");
-    if (searchButton?.nextSibling) {
-      toolbar.insertBefore(redoButton, searchButton.nextSibling);
-      toolbar.insertBefore(undoButton, redoButton);
-    } else {
-      toolbar.append(undoButton, redoButton);
-    }
+    // Keep route history controls in the second row, directly after
+    // "Karteninhalt". This avoids pushing top-toolbar buttons off-screen on
+    // narrow mobile displays.
+    filterBar.append(undoButton, redoButton);
 
     const clonePoints = () =>
       planner.points.map(({ id, coord, name, type, cat }) => ({

@@ -24,7 +24,7 @@
   };
 
   const app = {
-    version: "2026.09.03.7",
+    version: "2026.09.09.1",
     state,
     events,
     config: {
@@ -158,6 +158,10 @@
     doubleClickZoom: false,
   });
   app.map = map;
+  // Explicitly disable double-click / double-tap zoom as well. This avoids
+  // the built-in MapLibre gesture competing with Outabout's free-point gesture
+  // on mobile browsers such as Android Chrome.
+  map.doubleClickZoom?.disable();
   map.addControl(
     new maplibregl.NavigationControl({ showCompass: false }),
     "bottom-right",
@@ -174,6 +178,7 @@
 
   map.on("load", () => {
     mapReady = true;
+    map.doubleClickZoom?.disable();
     app.emit("map:ready", { map });
     app.setStatus("Karte geladen.");
   });

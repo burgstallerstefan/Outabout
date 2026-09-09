@@ -105,8 +105,12 @@ test("GPX-Import ist global verfügbar und übernimmt die Originalstrecke", () =
   const gpx = fs.readFileSync(path.join(root, "gpx.js"), "utf8");
   assert.match(html, /id="gpxImportBtn"/);
   assert.match(html, /id="gpxImportInput"/);
-  assert.match(gpx, /\["trk trkseg trkpt", "rte rtept", "wpt"\]/);
+  assert.match(gpx, /function trackSegments/);
+  assert.match(gpx, /function splitDisconnected/);
+  assert.match(gpx, /pointSegments\(xml, "trk trkseg"\)/);
+  assert.match(gpx, /tracks\.flatMap\(splitDisconnected\)/);
   assert.match(gpx, /app\.planner\?\.importGpxTrack/);
   assert.match(planner, /function importGpxTrack/);
-  assert.match(planner, /route\.segments = \[segment\]/);
+  assert.match(planner, /route\.segments = importedSegments/);
+  assert.match(planner, /index === 0 \? "break" : segment\.status/);
 });

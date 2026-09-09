@@ -13,15 +13,48 @@
     return Number.isFinite(elevation) ? [lng, lat, elevation] : [lng, lat];
   }
 
-  function trackPoints(xml) {
-    const selectors = ["trk trkseg trkpt", "rte rtept", "wpt"];
-    for (const selector of selectors) {
-      const points = [...xml.querySelectorAll(selector)]
-        .map(pointFromElement)
-        .filter(Boolean);
-      if (points.length >= 2) return points;
+  function pointSegments(xml, selector) {
+    return [...xml.querySelectorAll(selector)]
+      .map((element) =>
+        [...element.querySelectorAll(":scope > trkpt, :scope > rtept")]
+          .map(pointFromElement)
+          .filter(Boolean),
+      )
+      .filter((points) => points.length >= 2);
+  }
+
+  function splitDisconnected(points) {
+    if (points.length < 3) return [points];
+    const steps = points
+      .slice(1)
+      .map((point, index) => app.util.km(points[index], point))
+      .filter(Number.isFinite)
+      .sort((a, b) => a - b);
+    const median = steps[Math.floor(steps.length / 2)] || 0;
+    // A copied-together GPX track can contain an artificial jump. Keep normal
+    // sparse recordings intact, but do not draw a line across an outlier gap.
+    const maxConnectedGapKm = Math.max(0.5, median * 25);
+    const segments = [];
+    let current = [points[0]];
+    for (const point of points.slice(1)) {
+      if (app.util.km(current.at(-1), point) > maxConnectedGapKm) {
+        if (current.length >= 2) segments.push(current);
+        current = [point];
+      } else current.push(point);
     }
-    return [];
+    if (current.length >= 2) segments.push(current);
+    return segments;
+  }
+
+  function trackSegments(xml) {
+    const tracks = pointSegments(xml, "trk trkseg");
+    if (tracks.length) return tracks.flatMap(splitDisconnected);
+    const routes = pointSegments(xml, "rte");
+    if (routes.length) return routes.flatMap(splitDisconnected);
+    const waypoints = [...xml.querySelectorAll("wpt")]
+      .map(pointFromElement)
+      .filter(Boolean);
+    return waypoints.length >= 2 ? splitDisconnected(waypoints) : [];
   }
 
   function gpxName(xml, fallback) {
@@ -36,19 +69,19 @@
     const xml = new DOMParser().parseFromString(text, "application/xml");
     if (xml.querySelector("parsererror"))
       throw new Error("Ungültige GPX-Datei");
-    const coords = trackPoints(xml);
-    if (coords.length < 2)
+    const segments = trackSegments(xml);
+    if (!segments.length)
       throw new Error(
         "Die GPX-Datei enthält keine Strecke mit mindestens zwei Punkten.",
       );
-    return { coords, name: gpxName(xml, filename) };
+    return { segments, name: gpxName(xml, filename) };
   }
 
   async function importGpx(file) {
     if (!file) return;
     try {
       const parsed = parseGpx(await file.text(), file.name || "GPX-Route");
-      if (!app.planner?.importGpxTrack(parsed.coords, parsed))
+      if (!app.planner?.importGpxTrack(parsed.segments, parsed))
         throw new Error("GPX-Strecke konnte nicht übernommen werden.");
     } catch (error) {
       app.log("gpx:import", error, { name: file.name });

@@ -349,8 +349,8 @@
     const edgeStatuses = [];
     for (const segment of segments) {
       segment.coords.forEach((coord, index) => {
-        if (coords.length && index === 0) return;
-        if (coords.length) edgeStatuses.push(segment.status);
+        if (coords.length)
+          edgeStatuses.push(index === 0 ? "break" : segment.status);
         coords.push(coord);
       });
     }
@@ -359,6 +359,11 @@
     let up = 0;
     let down = 0;
     for (let index = coords.length - 2; index >= 0; index -= 1) {
+      if (edgeStatuses[index] === "break") {
+        remainingDistance[index] = remainingDistance[index + 1];
+        remainingUp[index] = remainingUp[index + 1];
+        continue;
+      }
       const distance = util.km(coords[index], coords[index + 1]);
       let ascent = 0;
       if (
@@ -1309,13 +1314,19 @@
       /[\\/:*?"<>|]+/g,
       "-",
     );
-    const trackPoints = route.coords
+    const trackSegments = route.segments
+      .filter((segment) => segment.coords?.length >= 2)
       .map(
-        (coord) =>
-          `<trkpt lat="${coord[1]}" lon="${coord[0]}">${Number.isFinite(Number(coord[2])) ? `<ele>${Number(coord[2])}</ele>` : ""}</trkpt>`,
+        (segment) =>
+          `<trkseg>${segment.coords
+            .map(
+              (coord) =>
+                `<trkpt lat="${coord[1]}" lon="${coord[0]}">${Number.isFinite(Number(coord[2])) ? `<ele>${Number(coord[2])}</ele>` : ""}</trkpt>`,
+            )
+            .join("")}</trkseg>`,
       )
       .join("");
-    const gpx = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Outabout" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>${xml(name)}</name></metadata><trk><name>${xml(name)}</name><type>${xml(app.activity.config.label)}</type><trkseg>${trackPoints}</trkseg></trk></gpx>`;
+    const gpx = `<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Outabout" xmlns="http://www.topografix.com/GPX/1/1"><metadata><name>${xml(name)}</name></metadata><trk><name>${xml(name)}</name><type>${xml(app.activity.config.label)}</type>${trackSegments}</trk></gpx>`;
     util.download(
       new Blob([gpx], { type: "application/gpx+xml" }),
       `${name}.gpx`,
@@ -1323,19 +1334,37 @@
     app.setStatus("GPX gespeichert.", "success");
   }
 
-  function importGpxTrack(coords, { name = "Importierte GPX-Route" } = {}) {
-    const track = (coords || []).filter(util.validCoord).map(util.coord);
-    if (track.length < 2) return false;
+  function importGpxTrack(segments, { name = "Importierte GPX-Route" } = {}) {
+    const importedSegments = (segments || [])
+      .map((coords) =>
+        (coords || [])
+          .filter(util.validCoord)
+          .map((coord) =>
+            Number.isFinite(Number(coord[2]))
+              ? [Number(coord[0]), Number(coord[1]), Number(coord[2])]
+              : util.coord(coord),
+          ),
+      )
+      .filter((coords) => coords.length >= 2)
+      .map((coords) => ({ status: "routed", coords, properties: {} }));
+    if (!importedSegments.length) return false;
     abortRouting();
     clearTimeout(rebuildTimer);
     rebuildTimer = null;
     route.points = [
-      normalizePoint(track[0], { name: "Start", cat: "gpx" }, 0),
-      normalizePoint(track.at(-1), { name: "Ziel", cat: "gpx" }, 1),
+      normalizePoint(
+        importedSegments[0].coords[0],
+        { name: "Start", cat: "gpx" },
+        0,
+      ),
+      normalizePoint(
+        importedSegments.at(-1).coords.at(-1),
+        { name: "Ziel", cat: "gpx" },
+        1,
+      ),
     ].filter(Boolean);
-    const segment = { status: "routed", coords: track, properties: {} };
-    const analyzed = analyzeSegments([segment]);
-    route.segments = [segment];
+    const analyzed = analyzeSegments(importedSegments);
+    route.segments = importedSegments;
     route.coords = analyzed.coords;
     route.edgeStatuses = analyzed.edgeStatuses;
     route.stats = analyzed;
@@ -1352,7 +1381,7 @@
     persist();
     app.emit("route:calculated", { route });
     app.setStatus(
-      `GPX importiert: ${track.length.toLocaleString("de-AT")} Trackpunkte.`,
+      `GPX importiert: ${analyzed.coords.length.toLocaleString("de-AT")} Trackpunkte in ${importedSegments.length} getrennten Segment${importedSegments.length === 1 ? "" : "en"}.`,
       "success",
     );
     fitRoute();

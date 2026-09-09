@@ -24,7 +24,7 @@
   };
 
   const app = {
-    version: "2026.09.09.2",
+    version: "2026.09.09.3",
     state,
     events,
     config: {
@@ -187,7 +187,10 @@
       lastMapTap = current;
       if (!previous) return;
       const elapsed = now - previous.time;
-      const distance = Math.hypot(current.x - previous.x, current.y - previous.y);
+      const distance = Math.hypot(
+        current.x - previous.x,
+        current.y - previous.y,
+      );
       if (elapsed > 380 || distance > 48) return;
 
       event.preventDefault();
@@ -195,7 +198,10 @@
       lastMapTap = null;
 
       const rect = map.getContainer().getBoundingClientRect();
-      const lngLat = map.unproject([current.x - rect.left, current.y - rect.top]);
+      const lngLat = map.unproject([
+        current.x - rect.left,
+        current.y - rect.top,
+      ]);
       app.ui.openPointPopup?.({
         coord: [lngLat.lng, lngLat.lat],
         name: "Punkt",

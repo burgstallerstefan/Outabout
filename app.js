@@ -155,6 +155,7 @@
     center: [13.25, 47.45],
     zoom: 8,
     attributionControl: true,
+    doubleClickZoom: false,
   });
   app.map = map;
   map.addControl(

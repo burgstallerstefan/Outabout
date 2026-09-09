@@ -15,19 +15,33 @@
     const undoButton = document.createElement("button");
     const redoButton = document.createElement("button");
 
+    function styleHistoryButton(button) {
+      button.style.width = "46px";
+      button.style.minWidth = "46px";
+      button.style.padding = "0";
+      button.style.border = "1px solid #ccc";
+      button.style.borderRadius = "12px";
+      button.style.background = "#fff";
+      button.style.color = "#222";
+      button.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.15)";
+      button.style.opacity = "1";
+      button.style.fontSize = "24px";
+      button.style.fontWeight = "700";
+    }
+
     undoButton.id = "undoRouteBtn";
     undoButton.type = "button";
-    undoButton.className = "icon-button";
     undoButton.textContent = "↶";
     undoButton.title = "Routenänderung rückgängig";
     undoButton.setAttribute("aria-label", undoButton.title);
+    styleHistoryButton(undoButton);
 
     redoButton.id = "redoRouteBtn";
     redoButton.type = "button";
-    redoButton.className = "icon-button";
     redoButton.textContent = "↷";
     redoButton.title = "Routenänderung wiederholen";
     redoButton.setAttribute("aria-label", redoButton.title);
+    styleHistoryButton(redoButton);
 
     // Keep route history controls in the second row, directly after
     // "Karteninhalt". This avoids pushing top-toolbar buttons off-screen on
@@ -50,6 +64,13 @@
     function syncButtons() {
       undoButton.disabled = undoStack.length <= 1;
       redoButton.disabled = redoStack.length === 0;
+      // Keep disabled controls visually solid instead of faded/transparent.
+      undoButton.style.opacity = "1";
+      redoButton.style.opacity = "1";
+      undoButton.style.background = "#fff";
+      redoButton.style.background = "#fff";
+      undoButton.style.color = undoButton.disabled ? "#888" : "#222";
+      redoButton.style.color = redoButton.disabled ? "#888" : "#222";
     }
 
     function record() {
